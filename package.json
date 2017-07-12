@@ -1,0 +1,26 @@
+{
+  "name": "r-spider",
+  "version": "1.0.0",
+  "description": "fetch resource from other site",
+  "main": "index.js",
+  "scripts": {
+    "test": "node test/test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/backToNature/resource-spider.git"
+  },
+  "keywords": [
+    "spider"
+  ],
+  "author": "'guohao' <'backtonature@foxmail.com'>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/backToNature/resource-spider/issues"
+  },
+  "homepage": "https://github.com/backToNature/resource-spider#readme",
+  "dependencies": {
+    "request": "^2.81.0",
+    "shelljs": "^0.7.8"
+  }
+}
