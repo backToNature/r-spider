@@ -1,6 +1,6 @@
 {
   "name": "r-spider",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "fetch resource from other site",
   "main": "index.js",
   "scripts": {

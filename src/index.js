@@ -12,7 +12,7 @@ const tmpdir = path.join(os.tmpdir(), 'r-spider-cache');
 const ext_map = require('./ext_map.js');
 
 
-let fetchFile = (resourceUrl, downPath, fn) => {
+let fetchFile = (resourceUrl, downPath, opt) => {
     // create directory and file
     if (!fs.existsSync(tmpdir)) {
         shell.mkdir(tmpdir);
@@ -37,7 +37,7 @@ let fetchFile = (resourceUrl, downPath, fn) => {
                     if (currentType.length) {
                         ext = currentType[0].ext;
                     } else {
-                        console.log(`content-type: ${content-type} don't support`);
+                        console.log(`content-type: ${contentType} don't support`);
                         reject({
                             err: true
                         });
@@ -46,6 +46,9 @@ let fetchFile = (resourceUrl, downPath, fn) => {
                 }
                 res.on('end', () => {
                     let finalFileName = path.basename(resourceUrl, ext);
+                    if (opt.fileNameStamp) {
+                        finalFileName += '-' + new Date().valueOf();
+                    }
                     shell.cp(filePath, path.join(downPath, `${finalFileName}${ext}`));
                     shell.rm('-rf', filePath);
                     resolve({
@@ -58,28 +61,39 @@ let fetchFile = (resourceUrl, downPath, fn) => {
     });
 };
 
-let entry = (resourceUrl, downPath, fn) => {
+let entry = (one, two, three) => {
+    let resourceUrl, downPath, fn, opt = {};
+    if (typeof three === 'function') {
+        resourceUrl = one;
+        downPath = two;
+        fn = three;
+    } else {
+        resourceUrl = one.url;
+        downPath = one.destPath || process.cwd();
+        fn = two;
+        opt = one;
+    }
     if (typeof resourceUrl === 'string') {
-        fetchFile(resourceUrl, downPath).then((res) => {
-            fn(res);
-        }).catch(err => {
-            fn(err);
-        });
+            fetchFile(resourceUrl, downPath, opt).then((res) => {
+                fn(res);
+            }).catch(err => {
+                fn(err);
+            });
     } else if (resourceUrl.length > 0) {
         let result = [];
         resourceUrl.forEach(item => {
-            fetchFile(item, downPath).then((res) => {
-                result.push(res);
-                if (result.length === resourceUrl.length) {
-                    fn(result);
-                }
-            }).catch(err => {
-                result.push(err);
-                if (result.length === resourceUrl.length) {
-                    fn(result);
-                }
-            })
-        });
+                fetchFile(item, downPath, opt).then((res) => {
+                    result.push(res);
+                    if (result.length === resourceUrl.length) {
+                        fn(result);
+                    }
+                }).catch(err => {
+                    result.push(err);
+                    if (result.length === resourceUrl.length) {
+                        fn(result);
+                    }
+                })
+            });
     }
 };
 module.exports = entry;
