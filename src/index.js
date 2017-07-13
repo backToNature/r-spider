@@ -24,6 +24,20 @@ let fetchFile = (resourceUrl, downPath, opt) => {
         shell.touch(filePath);
     }
     return new Promise((resolve, reject) => {
+        let ws = fs.createWriteStream(filePath);
+        ws.on('close', () => {
+            let finalFileName = path.basename(resourceUrl, ext);
+            if (opt.fileNameStamp) {
+                finalFileName += '-' + new Date().valueOf();
+                finalFileName = crypto.createHash('md5').update(finalFileName).digest('hex');
+            }
+            shell.cp(filePath, path.join(downPath, `${finalFileName}${ext}`));
+            shell.rm('-rf', filePath);
+            resolve({
+                fileName: `${finalFileName}${ext}`,
+                path: path.join(downPath, `${finalFileName}${ext}`)
+            });
+        });
         request
             .get(resourceUrl)
             .on('response', res => {
@@ -44,20 +58,9 @@ let fetchFile = (resourceUrl, downPath, opt) => {
                         return;
                     }
                 }
-                res.on('end', () => {
-                    let finalFileName = path.basename(resourceUrl, ext);
-                    if (opt.fileNameStamp) {
-                        finalFileName += '-' + new Date().valueOf();
-                    }
-                    shell.cp(filePath, path.join(downPath, `${finalFileName}${ext}`));
-                    shell.rm('-rf', filePath);
-                    resolve({
-                        fileName: `${finalFileName}${ext}`,
-                        path: path.join(downPath, `${finalFileName}${ext}`)
-                    });
-                });
             })
-            .pipe(fs.createWriteStream(filePath));
+            .pipe(ws);
+
     });
 };
 
@@ -82,18 +85,18 @@ let entry = (one, two, three) => {
     } else if (resourceUrl.length > 0) {
         let result = [];
         resourceUrl.forEach(item => {
-                fetchFile(item, downPath, opt).then((res) => {
-                    result.push(res);
-                    if (result.length === resourceUrl.length) {
-                        fn(result);
-                    }
-                }).catch(err => {
-                    result.push(err);
-                    if (result.length === resourceUrl.length) {
-                        fn(result);
-                    }
-                })
-            });
+            fetchFile(item, downPath, opt).then((res) => {
+                result.push(res);
+                if (result.length === resourceUrl.length) {
+                    fn(result);
+                }
+            }).catch(err => {
+                result.push(err);
+                if (result.length === resourceUrl.length) {
+                    fn(result);
+                }
+            })
+        });
     }
 };
 module.exports = entry;
